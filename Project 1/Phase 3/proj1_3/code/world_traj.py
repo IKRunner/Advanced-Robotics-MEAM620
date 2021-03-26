@@ -108,12 +108,15 @@ class WorldTraj(object):
 
             # Set b-vector for matrix solution: b = np.array([bx, by, bz])
             num_coeff = 8  # Minimum snap trajectory
-            n_deriv = 4
+            n_deriv = int(num_coeff / 2)
             num_segments, _ = self.T.shape
             b = set_b(self.points, num_segments, num_coeff, n_deriv)
 
             # Set A-matrix for matrix solution: A = np.array([Ax, Ay, Az])
             A = set_matrix(num_coeff, num_segments, n_deriv, self.T)
+
+            # Compute coefficients and reshape to (3 x num_segments x num_coeff)
+            self.c = np.linalg.solve(A,b).ravel().reshape(3, num_segments, num_coeff)
 
     def update(self, t):
         """

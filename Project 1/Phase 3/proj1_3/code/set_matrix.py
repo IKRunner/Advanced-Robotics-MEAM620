@@ -161,65 +161,11 @@ def set_matrix(n_coeff, n_seg, n, time):
 
     # Columns to place constants
     start = (n_coeff * n_seg) - 2
-    end = (n_coeff * n_seg) - (2 * (n - 1) + 1)
+    end = (n_coeff * n_seg) - (size + 1)
     rng = start - end
     cols = np.arange(start, start - (((rng + 1) * (n_seg - 1)) + (2 * (n_seg - 1))), -1).reshape(-1, (size + 2))
     cols = cols[:, :size]
     cols = cols[::-1].ravel()[...,np.newaxis]
-
-    # Place constants
-    x_cont_const[rows, cols] = np.tile(terms, n_seg - 1)[...,np.newaxis]
-    y_cont_const[rows, cols] = np.tile(terms, n_seg - 1)[...,np.newaxis]
-    z_cont_const[rows, cols] = np.tile(terms, n_seg - 1)[...,np.newaxis]
-
-    # Compute derivatives
-    x_pos_deriv = np.zeros((2 * (n - 1), n_coeff * (n_seg - 1)))
-    y_pos_deriv = np.zeros((2 * (n - 1), n_coeff * (n_seg - 1)))
-    z_pos_deriv = np.zeros((2 * (n - 1), n_coeff * (n_seg - 1)))
-
-    # First derivatives
-    x_deriv = Array(x_exp).diff(x)
-    y_deriv = Array(y_exp).diff(y)
-    z_deriv = Array(z_exp).diff(z)
-
-    for i in range(2 * (n - 1)):
-        x_fderiv = lambdify(x, x_deriv, 'numpy')
-        y_fderiv = lambdify(y, y_deriv, 'numpy')
-        z_fderiv = lambdify(z, z_deriv, 'numpy')
-        print(x_fderiv.__doc__)
-
-
-        #################
-        # t = Symbol('t')
-        # exp = (3 * t ** 3, 2 * t ** 2, 1 * t, 1.0, 0)
-        # f = lambdify(t, exp)
-        # print(f.__doc__)
-
-        ##################
-
-        # Access relevant elements
-        result = np.array(x_fderiv(time[0:-1, 0]), dtype=object)
-        x_curr_deriv = np.stack(np.array(x_fderiv(time[0:-1, 0]), dtype=object)[:-1 - 1 - i]).T
-        y_curr_deriv = np.stack(np.array(y_fderiv(time[0:-1, 0]), dtype=object)[:-1 - 1 - i]).T
-        z_curr_deriv = np.stack(np.array(z_fderiv(time[0:-1, 0]), dtype=object)[:-1 - 1 - i]).T
-
-        # Add back constants
-        x_curr_deriv = np.hstack((x_curr_deriv, np.repeat(-terms[i], n_seg - 1)[...,None]))
-
-        # Add (i+0) zeros in columns
-        x_curr_deriv = np.hstack((x_curr_deriv, np.zeros((n_seg - 1, i + 1))))
-
-        # Store current derivative
-        x_pos_deriv[i, :] = x_curr_deriv.ravel()
-        # y_pos_deriv[i, :] = np.hstack((y_curr_deriv, np.hstack((np.ones(((n_seg - 1), 1)),np.zeros(((n_seg - 1), 1)))))).ravel()
-        # z_pos_deriv[i, :] = np.hstack((z_curr_deriv, np.hstack((np.ones(((n_seg - 1), 1)),np.zeros(((n_seg - 1), 1)))))).ravel()
-
-        # Subsequent derivatives
-        # Compute subsequent derivatives
-        x_deriv = Array(x_deriv).diff(x)
-        y_deriv = Array(y_deriv).diff(y)
-        z_deriv = Array(z_deriv).diff(z)
-
 
     '''
     m = 4 # No. segments
@@ -229,7 +175,78 @@ def set_matrix(n_coeff, n_seg, n, time):
     x = x[:, :k + 1]
     # Flip with 
     x = x[::-1].ravel()[...,np.newaxis]
-    
+
     '''
+
+    # Place constants
+    x_cont_const[rows, cols] = np.tile(terms, n_seg - 1)[...,np.newaxis]
+    y_cont_const[rows, cols] = np.tile(terms, n_seg - 1)[...,np.newaxis]
+    z_cont_const[rows, cols] = np.tile(terms, n_seg - 1)[...,np.newaxis]
+
+    # Compute derivatives
+    x_pos_deriv = np.zeros((size, n_coeff * (n_seg - 1)))
+    y_pos_deriv = np.zeros((size, n_coeff * (n_seg - 1)))
+    z_pos_deriv = np.zeros((size, n_coeff * (n_seg - 1)))
+
+    # First derivatives
+    x_deriv = Array(x_exp).diff(x)
+    y_deriv = Array(y_exp).diff(y)
+    z_deriv = Array(z_exp).diff(z)
+
+    for i in range(size):
+        x_fderiv = lambdify(x, x_deriv, 'numpy')
+        y_fderiv = lambdify(y, y_deriv, 'numpy')
+        z_fderiv = lambdify(z, z_deriv, 'numpy')
+
+        #################
+        # Print current derivative
+        # print(x_fderiv.__doc__)
+        ##################
+
+        # Access relevant elements
+        result = np.array(x_fderiv(time[0:-1, 0]), dtype=object)
+        x_curr_deriv = np.stack(np.array(x_fderiv(time[0:-1, 0]), dtype=object)[:-1 - 1 - i]).T
+        y_curr_deriv = np.stack(np.array(y_fderiv(time[0:-1, 0]), dtype=object)[:-1 - 1 - i]).T
+        z_curr_deriv = np.stack(np.array(z_fderiv(time[0:-1, 0]), dtype=object)[:-1 - 1 - i]).T
+
+        # Add back constants
+        x_curr_deriv = np.hstack((x_curr_deriv, np.repeat(-terms[i], n_seg - 1)[..., None]))
+        y_curr_deriv = np.hstack((y_curr_deriv, np.repeat(-terms[i], n_seg - 1)[..., None]))
+        z_curr_deriv = np.hstack((z_curr_deriv, np.repeat(-terms[i], n_seg - 1)[..., None]))
+
+        # Add (i + 0) zeros to columns
+        x_curr_deriv = np.hstack((x_curr_deriv, np.zeros((n_seg - 1, i + 1))))
+        y_curr_deriv = np.hstack((y_curr_deriv, np.zeros((n_seg - 1, i + 1))))
+        z_curr_deriv = np.hstack((z_curr_deriv, np.zeros((n_seg - 1, i + 1))))
+
+        # Store current derivative
+        x_pos_deriv[i, :] = x_curr_deriv.ravel()
+        y_pos_deriv[i, :] = y_curr_deriv.ravel()
+        z_pos_deriv[i, :] = z_curr_deriv.ravel()
+
+        # Compute subsequent derivatives
+        x_deriv = Array(x_deriv).diff(x)
+        y_deriv = Array(y_deriv).diff(y)
+        z_deriv = Array(z_deriv).diff(z)
+
+    # Stack derivatives for each time segment
+    x_pos_deriv = np.vstack(np.hsplit(x_pos_deriv, int(n_coeff * (n_seg - 1) / n_coeff)))
+    y_pos_deriv = np.vstack(np.hsplit(y_pos_deriv, int(n_coeff * (n_seg - 1) / n_coeff)))
+    z_pos_deriv = np.vstack(np.hsplit(z_pos_deriv, int(n_coeff * (n_seg - 1) / n_coeff)))
+
+    # Compute columns
+    rng = np.arange(0, n_coeff * (n_seg - 1), 1)
+    sub_cols = np.row_stack(np.array_split(rng, n_coeff * (n_seg - 1)/n_coeff))
+    sub_cols = np.repeat(sub_cols, size, axis=0)
+
+    # Add derivative polynomials to continuity constraint matrix
+    x_cont_const[rows, sub_cols] = x_pos_deriv
+    y_cont_const[rows, sub_cols] = y_pos_deriv
+    z_cont_const[rows, sub_cols] = z_pos_deriv
+
+    # Add continuity constraints to A matrix
+    Ax[(n_coeff * n_seg) - num_cont_constr:, :] = x_cont_const
+    Ay[(n_coeff * n_seg) - num_cont_constr:, :] = y_cont_const
+    Az[(n_coeff * n_seg) - num_cont_constr:, :] = z_cont_const
 
     return np.array([Ax, Ay, Az])
