@@ -1,5 +1,5 @@
 # Advanced-Robotics-MEAM620
-Repository for for Advanced Robotics (MEAM 620, Spring 2020 Upenn)
+Repository for for Advanced Robotics (MEAM 620, Spring 2021 Upenn)
 
 As a part of the MEAM 620 Advanced Robotics Course, Python code for the following projects was written:
 - PD Controller Simulator for Quadrotor Dynamics
