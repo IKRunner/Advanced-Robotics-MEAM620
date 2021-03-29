@@ -19,5 +19,4 @@ def complementary_filter_update(initial_rotation, angular_velocity, linear_accel
     """
 
     # TODO Your code here - replace the return value with one you compute
-    # Github test
     return Rotation.identity()
