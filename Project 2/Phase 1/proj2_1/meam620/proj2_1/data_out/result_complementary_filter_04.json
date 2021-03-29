@@ -1,0 +1,13 @@
+{
+    "computed_rotation": [0.0, 0.0, 0.0, 1.0],
+    "true_rotation": [
+        0.6323598891596653,
+        0.702752693014808,
+        -0.3195382527848844,
+        0.06445873136817076
+    ],
+    "error": 3.0125857497256745,
+    "tol": 0.0001,
+    "passed": false,
+    "test_type": "complementary_filter_update"
+}
