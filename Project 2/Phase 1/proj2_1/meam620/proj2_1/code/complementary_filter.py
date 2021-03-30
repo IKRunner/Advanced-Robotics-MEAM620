@@ -19,12 +19,20 @@ def complementary_filter_update(initial_rotation, angular_velocity, linear_accel
     """
 
     # TODO Your code here - replace the return value with one you compute
-    # Update rotation using measured angular velocity
-    angular_velocity * dt
+
+    # Form quaternion
+    # Update rotation using measured angular velocity (How to factor initial condiiton??)
+    omega_hat = np.array([[0, -angular_velocity[2], angular_velocity[1]],
+                          [angular_velocity[2], 0, -angular_velocity[0]],
+                          [-angular_velocity[1], angular_velocity[0], 0]])
+
+    r_estimate = initial_rotation.as_matrix() * np.exp(omega_hat * dt)
+
+
     # Construct quaternion multiply together to obtain estimate
     # Using measured acceleration vector compute erroor meeasure by looking at magnnitude of accelration vectoor,
     # compare to 1 or 9.8
-    # Computee gain alpha based on output. If nonn-zero, compute correction matrix
+    # Compute gain alpha based on output. If nonn-zero, compute correction matrix
     # Apply rotation corection using gain alpha
 
 
