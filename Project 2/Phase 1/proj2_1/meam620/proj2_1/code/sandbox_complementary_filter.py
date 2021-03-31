@@ -33,6 +33,7 @@ for i in range(1, n):
     dt = (t[i] - t[i - 1]) * 1e-9
     R = complementary_filter_update(R, angular_velocity[i - 1], linear_acceleration[i], dt)
     euler[i] = R.as_euler('XYZ', degrees=True)
+    # print(euler[i])
 
 # %% Plots
 
