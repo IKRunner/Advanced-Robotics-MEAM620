@@ -1,10 +1,15 @@
 import numpy as np
 
+from proj1_3.code.time_polynomials import time_polynomials
 from proj1_3.code.graph_search import graph_search
 from proj1_3.code.set_matrix import set_matrix
 from proj1_3.code.set_sparse import set_sparse
 from proj1_3.code.set_vel import set_vel
 from proj1_3.code.set_b import set_b
+
+
+import matplotlib.pylab as plt
+import scipy.sparse as sparse
 
 
 class WorldTraj(object):
@@ -116,7 +121,10 @@ class WorldTraj(object):
             A = set_matrix(num_coeff, num_segments, n_deriv, self.T)
 
             # Compute coefficients and reshape to (3 x num_segments x num_coeff)
-            self.c = np.linalg.solve(A,b).ravel().reshape(3, num_segments, num_coeff)
+            self.coeff = np.linalg.solve(A, b).ravel().reshape(3, num_segments, num_coeff)
+
+            # Compute derivative and position polynomials
+            self.polynomials = time_polynomials(n_deriv, num_coeff)
 
     def update(self, t):
         """
@@ -142,6 +150,9 @@ class WorldTraj(object):
         yaw = 0
         yaw_dot = 0
 
+
+        # f_outputs = np.vstack((np.vstack((np.vstack((np.vstack((x, x_dot)), x_ddot)), x_dddot)), x_ddddot))
+
         # STUDENT CODE HERE
         # Return first set of waypoints with default parameters when only one waypoint is in path
         if self.points.shape[0] == 1:
@@ -154,11 +165,32 @@ class WorldTraj(object):
 
         # Time duration is within trajectory
         if t <= np.sum(self.T[:, 0]):
-            # print('test1')
-            ele = np.where(np.logical_or(self.T[:, 1] < t, self.T[:, 1] == t))
+            # Determine current segment
+            curr_seg = np.where(np.logical_or(self.T[:, 1] < t, self.T[:, 1] == t))
+
+            # Current segment time
+            curr_time = t - self.T[curr_seg[0][-1], 1]
+
+            # Current coefficients for (x, y, z)
+            curr_coeff = self.coeff[:,curr_seg[0][-1], :]
+
+            # Evaluate polynomial at segment time and multpliy coefficients
+            polys = np.array(self.polynomials(curr_time))[:, None, :] * curr_coeff
+
+            output = np.sum(polys, axis=2)
+            row, _ = output.shape
+            full_output = np.vstack((output, np.zeros((5 - row, 3))))
+            x = full_output[0, :]
+            x_dot = full_output[1, :]
+            x_ddot = full_output[2, :]
+            x_dddot = full_output[3, :]
+            x_ddddot = full_output[4, :]
+
+
+            # ele = np.where(np.logical_or(self.T[:, 1] < t, self.T[:, 1] == t))
             # Set velocity and position state
-            xdot = self.vel_des[ele[0][-1], :]
-            x = self.points[ele[0][-1], :] + self.vel_des[ele[0][-1], :] * (t - self.T[ele[0][-1], 1])
+            # xdot = self.vel_des[ele[0][-1], :]
+            # x = self.points[ele[0][-1], :] + self.vel_des[ele[0][-1], :] * (t - self.T[ele[0][-1], 1])
 
         # Time is greater than duration of full trajectory
         if t > np.sum(self.T[:, 0]):
