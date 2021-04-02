@@ -4,8 +4,6 @@ import numpy as np
 from numpy.linalg import norm
 from scipy.spatial.transform import Rotation
 from scipy.linalg import expm
-import itertools
-import random
 
 
 # %%
@@ -36,35 +34,31 @@ def complementary_filter_update(initial_rotation, angular_velocity, linear_accel
     g = 9.81
     gain_slope = -10
 
-    # # Use linear ODE model to compute time position rotation matrix and form to quaternnion
-    # curr_quaternion = Rotation.from_matrix(expm(skew(angular_velocity) * dt)).as_quat()
+    # Use linear ODE model to current rotation as function of dt and angular velocity
     curr_rotation = Rotation.from_matrix(expm(skew(angular_velocity) * dt))
 
-
-    # Do quaternion multiplication to update rotation matrix
-    # prev_quaternion = initial_rotation.as_quat()
-    # prev_rotation = initial_rotation.as_matrix()
-    # real_estimate = prev_quaternion[-1] * curr_quaternion[-1] - prev_quaternion[0:3] @ curr_quaternion[0:3]
-    # imag_estimate = prev_quaternion[-1] * curr_quaternion[0:3] + curr_quaternion[-1] * prev_quaternion[0:3] \
-    #                 + skew(prev_quaternion[0:3]) @ curr_quaternion[0:3]
-    # quat_estimate = np.append(imag_estimate, real_estimate)
-    # rot_estimate = Rotation.from_quat([quat_estimate[0], quat_estimate[1], quat_estimate[2],
-    #                                    quat_estimate[3]]).as_matrix()
-
+    # Do Rotation compoisition to obtain current rotation estimate
     rot_estimate = initial_rotation * curr_rotation
-
-    # Compute g_prime and normalize to g
-    g_prime = rot_estimate.as_matrix() @ linear_acceleration
-    g_prime = g_prime / np.linalg.norm(g_prime)
 
     # Computer error magnitude of acceleration vector
     error_measured = np.abs(np.linalg.norm(linear_acceleration) - g)
-    # print(error_measured)
+
+    # Compute g_prime and normalize to g
+    g_prime = rot_estimate.as_matrix() @ linear_acceleration
+    g_prime = g_prime / np.linalg.norm(g)
 
     # Construct quaternion correction
-    imag_correct = np.array([np.sqrt((g_prime[2] + 1) / 2), g_prime[1] / np.sqrt(2 * (g_prime[2] + 1)), -g_prime[0] / np.sqrt(2 * (g_prime[2] + 1))])
+    # real_corect = np.sqrt((1 + (g * g_prime[0]))/ (2))
+    # imag_correct = np.array([0, (g_prime[2])/(g * np.sqrt(2 * (1 + (g * g_prime[0])))),
+    #                          (-g_prime[1])/(g * np.sqrt(2 * (1 + (g * g_prime[0]))))])
+    # quat_correct = np.append(imag_correct, real_corect)
 
-    quat_correct = np.append(imag_correct, 0)
+    real_corect = np.sqrt((1 + (g * g_prime[0])) / (2))
+    imag_correct = np.array([0, (g_prime[2]) / (g * np.sqrt(2 * (1 + (g * g_prime[0])))),
+                             (-g_prime[1]) / (g * np.sqrt(2 * (1 + (g * g_prime[0]))))])
+    quat_correct = np.append(imag_correct, real_corect)
+
+
 
     # Compute alpha
     if error_measured > 0.2:
@@ -73,8 +67,6 @@ def complementary_filter_update(initial_rotation, angular_velocity, linear_accel
         alpha = 1
     else:
         alpha = gain_slope * error_measured + 2
-
-    # print(alpha)
 
     # Construct blended quaternion correction and normalize
     null_rotation = np.array([0, 0, 0, 1])
@@ -85,32 +77,7 @@ def complementary_filter_update(initial_rotation, angular_velocity, linear_accel
     rot_correction = Rotation.from_quat([quat_correct_prime[0], quat_correct_prime[1],
                                          quat_correct_prime[2], quat_correct_prime[3]])
 
-
-     # Do quaternion multiplication to update rotation matrix
-
-    # Update rotation using measured angular velocity (How to factor initial condiiton??)
-    # omega_hat = np.array([[0, -angular_velocity[2], angular_velocity[1]],
-    #                       [angular_velocity[2], 0, -angular_velocity[0]],
-    #                       [-angular_velocity[1], angular_velocity[0], 0]])
-    #
-    # r_estimate = initial_rotation.as_matrix() * np.exp(omega_hat * dt)
-
-
-
-    # # Convert current rotation matrix
-    # Rotation.from_matrix(rot_estimate * rot_correction)
-
-    # Initial output
-    # Rotation.identity()
-
-
-
-    # printBoard(board)
-
     return rot_correction * rot_estimate
-
-# rot_estimate = (quat_estimate[0] ** 2 - quat_estimate[1:] @ quat_estimate[1:]) * Rotation.identity().as_matrix() + \
-#                2 * quat_estimate[0] * skew(quat_estimate[1:]) +  2 * quat_estimate[1:][:, None] @ quat_estimate[1:][None, :]
 
 def skew(v):
     """
