@@ -53,9 +53,9 @@ def complementary_filter_update(initial_rotation, angular_velocity, linear_accel
     #                          (-g_prime[1])/(g * np.sqrt(2 * (1 + (g * g_prime[0]))))])
     # quat_correct = np.append(imag_correct, real_corect)
 
-    real_corect = np.sqrt((1 + (g * g_prime[0])) / (2))
-    imag_correct = np.array([0, (g_prime[2]) / (g * np.sqrt(2 * (1 + (g * g_prime[0])))),
-                             (-g_prime[1]) / (g * np.sqrt(2 * (1 + (g * g_prime[0]))))])
+    real_corect = np.sqrt((1 + (1 * g_prime[0])) / (2))
+    imag_correct = np.array([0, (g_prime[2]) / (1 * np.sqrt(2 * (1 + (1 * g_prime[0])))),
+                             (-g_prime[1]) / (1 * np.sqrt(2 * (1 + (1 * g_prime[0]))))])
     quat_correct = np.append(imag_correct, real_corect)
 
 
