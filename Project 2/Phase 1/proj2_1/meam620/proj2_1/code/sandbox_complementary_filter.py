@@ -39,7 +39,7 @@ for i in range(1, n):
 
 t2 = (t - t[0]) * 1e-9
 
-fig = plt.figure()
+fig, ax = plt.subplots()
 plt.plot(t2, euler[:, 0], label='yaw')
 plt.plot(t2, euler[:, 1], label='pitch')
 plt.plot(t2, euler[:, 2], label='roll')
@@ -47,4 +47,5 @@ plt.ylabel('degrees')
 plt.xlabel('seconds')
 plt.title('Attitude of Quad')
 plt.legend()
+fig.savefig('../data_out/Output.png')
 plt.show()

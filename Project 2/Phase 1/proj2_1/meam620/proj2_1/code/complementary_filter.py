@@ -31,7 +31,7 @@ def complementary_filter_update(initial_rotation, angular_velocity, linear_accel
     '''
 
     # Accelaration due to gravity and alpha slope
-    g = 9.81
+    g = 9.8
     gain_slope = -10
 
     # Use linear ODE model to current rotation as function of dt and angular velocity
@@ -42,10 +42,11 @@ def complementary_filter_update(initial_rotation, angular_velocity, linear_accel
 
     # Computer error magnitude of acceleration vector
     error_measured = np.abs(np.linalg.norm(linear_acceleration) - g)
+    # print(error_measured)
 
     # Compute g_prime and normalize to g
     g_prime = rot_estimate.as_matrix() @ linear_acceleration
-    g_prime = g_prime / np.linalg.norm(g)
+    g_prime = g_prime / np.linalg.norm(g_prime)
 
     # Construct quaternion correction
     # real_corect = np.sqrt((1 + (g * g_prime[0]))/ (2))
@@ -53,20 +54,18 @@ def complementary_filter_update(initial_rotation, angular_velocity, linear_accel
     #                          (-g_prime[1])/(g * np.sqrt(2 * (1 + (g * g_prime[0]))))])
     # quat_correct = np.append(imag_correct, real_corect)
 
-    real_corect = np.sqrt((1 + (1 * g_prime[0])) / (2))
-    imag_correct = np.array([0, (g_prime[2]) / (1 * np.sqrt(2 * (1 + (1 * g_prime[0])))),
-                             (-g_prime[1]) / (1 * np.sqrt(2 * (1 + (1 * g_prime[0]))))])
+    real_corect = np.sqrt((1 + g_prime[0]) / (2))
+    imag_correct = np.array([0, (g_prime[2]) / (1 * np.sqrt(2 * (1 + g_prime[0]))),
+                             (-g_prime[1]) / (1 * np.sqrt(2 * (1 + g_prime[0])))])
     quat_correct = np.append(imag_correct, real_corect)
 
-
-
     # Compute alpha
-    if error_measured > 0.2:
+    if error_measured >= 0.2:
         alpha = 0
-    elif error_measured < 0.1:
+    elif error_measured <= 0.1:
         alpha = 1
     else:
-        alpha = gain_slope * error_measured + 2
+        alpha = (gain_slope * error_measured) + 2
 
     # Construct blended quaternion correction and normalize
     null_rotation = np.array([0, 0, 0, 1])
