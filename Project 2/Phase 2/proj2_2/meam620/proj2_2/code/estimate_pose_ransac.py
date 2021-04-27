@@ -57,6 +57,7 @@ def solve_w_t(uvd1, uvd2, R0):
     # Generate y matrix
     _, n = uvd1.shape
     Y = R0.as_matrix() @ np.vstack((uvd2[0:2, :], np.ones((1, n))))
+    assert Y.shape[0] == 3 and Y.shape[1] == n
 
     # Loop through all correspondences
     b = np.zeros((2 * n,1))
@@ -65,31 +66,21 @@ def solve_w_t(uvd1, uvd2, R0):
         # Generate b
         u1_prime = uvd1[0, i]
         v1_prime = uvd1[1, i]
-        b[i:2, :] = -np.hstack((np.eye(2,2), np.array([[-u1_prime], [-v1_prime]]))) @ Y[:, i]
+        d2_prime = uvd2[2, i]
+        k = np.hstack((np.eye(2,2), np.array([[-u1_prime], [-v1_prime]])))
+        b[i:i+2, :] = -k @ Y[:, i][...,None]
 
         # Generate A matrix
-        A[i:2, :] =
+        A[i:i+2, :] = k @ np.array([[0, Y[2, i], -Y[1, i], d2_prime, 0, 0],
+                                  [-Y[2, i], 0, Y[0, i], 0, d2_prime, 0],
+                                  [Y[1, i], -Y[0, i], 0, 0, 0, d2_prime]])
+    assert b.shape[0] == A.shape[0] and b.shape[1] == 1 and A.shape[1] == 6 and b.shape[0] == 2*n
 
-
-
-        # Generate y {3x3 * 3x1 = 3x1}
-        # u1_prime = uvd1[0, i]
-        # v1_prime = uvd1[1, i]
-        # u2_prime = uvd2[0, i]
-        # v2_prime = uvd2[1, i]
-        # y = (R0 @ np.array([[u2_prime], [u2_prime], [1]]))[:,0]
-        #
-        # # Generate b {2x3 * 3x1 = 2x1}
-        # x = np.array([[1, 0, -u1_prime], [0, 1, -v1_prime]])
-        # b = -x @ y
-        #
-        # # Generate A {2x6}
-        # A = x @ np.array([[0, y[2], -y[1], uvd2[2, i], 0, 0],
-        #               [-y[2], 0, y[0], 0, uvd2[2, i], 0],
-        #               [y[1], -y[0], 0, 0, 0, uvd2[2, i]]])
-        #
-        # # Solve system
-        # np.linalg.solve(A, b)
+    # Solve system
+    x, _, _, _ = np.linalg.lstsq(A,b, rcond=-1)
+    assert x.shape[0] == 6 and x.shape[1] == 1
+    w = x[0:3]
+    t = x[3:6]
 
 
     return w, t
