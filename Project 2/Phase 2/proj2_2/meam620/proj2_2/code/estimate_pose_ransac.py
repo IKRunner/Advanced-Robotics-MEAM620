@@ -51,9 +51,6 @@ def solve_w_t(uvd1, uvd2, R0):
     '''
 
     # TODO Your code here replace the dummy return value with a value you compute
-    w = np.zeros((3,1))
-    t = np.zeros((3,1))
-
     # Generate y matrix
     _, n = uvd1.shape
     Y = R0.as_matrix() @ np.vstack((uvd2[0:2, :], np.ones((1, n))))
@@ -68,10 +65,10 @@ def solve_w_t(uvd1, uvd2, R0):
         v1_prime = uvd1[1, i]
         d2_prime = uvd2[2, i]
         k = np.hstack((np.eye(2,2), np.array([[-u1_prime], [-v1_prime]])))
-        b[i:i+2, :] = -k @ Y[:, i][...,None]
+        b[2*i:(2*i)+2, :] = -k @ Y[:, i][...,None]
 
         # Generate A matrix
-        A[i:i+2, :] = k @ np.array([[0, Y[2, i], -Y[1, i], d2_prime, 0, 0],
+        A[2*i:(2*i)+2, :] = k @ np.array([[0, Y[2, i], -Y[1, i], d2_prime, 0, 0],
                                   [-Y[2, i], 0, Y[0, i], 0, d2_prime, 0],
                                   [Y[1, i], -Y[0, i], 0, 0, 0, d2_prime]])
     assert b.shape[0] == A.shape[0] and b.shape[1] == 1 and A.shape[1] == 6 and b.shape[0] == 2*n
@@ -79,10 +76,10 @@ def solve_w_t(uvd1, uvd2, R0):
     # Solve system
     x, _, _, _ = np.linalg.lstsq(A,b, rcond=-1)
     assert x.shape[0] == 6 and x.shape[1] == 1
+
+    # Extract rotation and translation
     w = x[0:3]
     t = x[3:6]
-
-
     return w, t
 
 

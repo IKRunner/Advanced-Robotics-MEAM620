@@ -1,7 +1,7 @@
 {
-    "w_error": 5.780851256289268e-05,
-    "t_error": 0.0012194821514245617,
+    "w_error": 6.216025217875883e-17,
+    "t_error": 1.2831513977144894e-15,
     "tol": 1e-05,
-    "passed": false,
+    "passed": true,
     "test_type": "solve_w_t"
 }
