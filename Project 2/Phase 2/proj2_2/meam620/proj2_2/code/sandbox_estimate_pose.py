@@ -23,7 +23,7 @@ focal_length = dataset.rectified_camera_matrix[0,0]
 
 pose_iterations = 3
 ransac_threshold = 3/focal_length
-ransac_iterations = 0
+ransac_iterations = 10
 
 R = Rotation.identity()
 T = np.zeros((3, 1))

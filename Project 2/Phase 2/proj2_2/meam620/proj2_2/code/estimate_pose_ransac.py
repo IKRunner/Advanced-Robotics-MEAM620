@@ -40,10 +40,9 @@ def solve_w_t(uvd1, uvd2, R0):
     # Generate y matrix
     _, n = uvd1.shape
     Y = R0.as_matrix() @ np.vstack((uvd2[0:2, :], np.ones((1, n))))
-    assert Y.shape[0] == 3 and Y.shape[1] == n
 
     # Loop through all correspondences
-    b = np.zeros((2 * n,1))
+    b = np.zeros((2 * n, 1))
     A = np.zeros((2 * n, 6))
     for i in range(n):
         # Generate b
@@ -57,11 +56,9 @@ def solve_w_t(uvd1, uvd2, R0):
         A[2*i:(2*i)+2, :] = k @ np.array([[0, Y[2, i], -Y[1, i], d2_prime, 0, 0],
                                   [-Y[2, i], 0, Y[0, i], 0, d2_prime, 0],
                                   [Y[1, i], -Y[0, i], 0, 0, 0, d2_prime]])
-    assert b.shape[0] == A.shape[0] and b.shape[1] == 1 and A.shape[1] == 6 and b.shape[0] == 2*n
 
     # Solve system
     x, _, _, _ = np.linalg.lstsq(A,b, rcond=-1)
-    assert x.shape[0] == 6 and x.shape[1] == 1
 
     # Extract rotation and translation vectors
     w = x[0:3]
