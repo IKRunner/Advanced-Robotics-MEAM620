@@ -106,27 +106,39 @@ def measurement_update_step(nominal_state, error_state_covariance, uv, Pw, error
     # Unpack nominal_state tuple
     p, v, q, a_b, w_b, g = nominal_state
 
-    # YOUR CODE HERE - compute the innovation next state, next error_state covariance
-
     # Compute innovation vector
     Pc = q.as_matrix().T @ (Pw - p)
     Xc = Pc[0, 0]
     Yc = Pc[1, 0]
     Zc = Pc[2, 0]
-    innovation = uv - np.array([[Xc / Zc], [Yc/ Zc]])
+    innovation = uv - np.array([[Xc / Zc], [Yc / Zc]])
 
-    # No update if magnitude of innovation vector exceeds threshold
+    # Check if measurement is an inlier
     if norm(innovation) > error_threshold:
         return (p, v, q, a_b, w_b, g), error_state_covariance, innovation
 
-    # Compute gain matrix
+    # Compute Jacobian
     Ht = np.zeros((2, 18))
     u = uv[0, 0]
     v = uv[1, 0]
-    del_zt = (1 / Zc) * np.array([[1, 0, -u], [0, 1, -v]])
-    Ht[:, 0:3] = del_zt @ -q.as_matrix().T
-    Ht[0:2, 6:9] = del_zt
+    del_zt_pc = (1 / Zc) * np.array([[1, 0, -u], [0, 1, -v]])
+    Ht[:, 0:3] = del_zt_pc @ -q.as_matrix().T
+    Ht[:, 6:9] = del_zt_pc @ skew(np.squeeze(Pc))
 
+    # Compute EKF update
+    Kt = error_state_covariance @ Ht.T @ np.linalg.inv(Ht @ error_state_covariance @ Ht.T + Q)
+    ekf_update = Kt @ innovation
+
+    # Update nominal state
+    p = p + ekf_update[0:3]
+    v = v + ekf_update[3:6]
+    q = q * Rotation.from_matrix(expm(skew(np.squeeze(ekf_update[6:9]))))
+    a_b = a_b + ekf_update[9:12]
+    w_b = w_b +ekf_update[12:15]
+    g = g + ekf_update[15:18]
+
+    # Update error state covariance matrix
+    error_state_covariance = (np.eye(18) - Kt @ Ht) @ error_state_covariance @ (np.eye(18) - Kt @ Ht).T + (Kt @ Q @ Kt.T)
 
 
     return (p, v, q, a_b, w_b, g), error_state_covariance, innovation
