@@ -3,13 +3,12 @@ import numpy as np
 import os
 
 cams = ['../dataset/MachineHall01_reduced/cam0/data',
-                  '../dataset/MachineHall01_reduced/cam1/data']
+        '../dataset/MachineHall01_reduced/cam1/data']
 
 videos = np.array(['../data_out/vids/video_0.avi','../data_out/vids/video_1.avi'], dtype=str)
 
-
 for i, cam in enumerate(cams):
-    images = [img for img in os.listdir(cam) if img.endswith(".png")]
+    images = [img for img in sorted(os.listdir(cam)) if img.endswith(".png")]
     frame = cv2.imread(os.path.join(cam, images[0]))
     height, width, layers = frame.shape
 
@@ -20,3 +19,4 @@ for i, cam in enumerate(cams):
 
     cv2.destroyAllWindows()
     video.release()
+
